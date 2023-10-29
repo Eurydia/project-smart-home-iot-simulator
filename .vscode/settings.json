@@ -1,0 +1,6 @@
+{
+    "python.terminal.activateEnvironment": true,
+    "python.defaultInterpreterPath": "~/venv/bin/python",
+    "python.analysis.fixAll": ["source.convertImportFormat", "source.unusedImports"],
+    "python.analysis.typeCheckingMode": "strict"
+}

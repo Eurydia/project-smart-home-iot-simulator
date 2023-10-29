@@ -1,0 +1,20 @@
+[2023-10-29 21:30:59.982402+00:00] Front door light: current BRIGHTNESS is 75.
+[2023-10-29 21:30:59.982402+00:00] Back door light: current BRIGHTNESS is 75.
+[2023-10-29 21:30:59.982402+00:00] Balcony light: current BRIGHTNESS is 75.
+[2023-10-29 21:30:59.983401+00:00] Bed room humidifier: current AIR_HUMIDITY is 70.
+[2023-10-29 21:30:59.984402+00:00] Primary air conditioner: current TEMPARATURE is 20.
+[2023-10-29 21:31:01.987257+00:00] Front door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:01.987257+00:00] Back door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:01.987257+00:00] Balcony light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:01.989258+00:00] Bed room humidifier: current AIR_HUMIDITY is 70.
+[2023-10-29 21:31:01.990258+00:00] Primary air conditioner: current TEMPARATURE is 20.
+[2023-10-29 21:31:03.991775+00:00] Front door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:03.991775+00:00] Back door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:03.991775+00:00] Balcony light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:03.993775+00:00] Bed room humidifier: current AIR_HUMIDITY is 70.
+[2023-10-29 21:31:03.993775+00:00] Primary air conditioner: current TEMPARATURE is 20.
+[2023-10-29 21:31:05.997583+00:00] Front door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:05.997583+00:00] Back door light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:05.997583+00:00] Balcony light: current BRIGHTNESS is 75.
+[2023-10-29 21:31:05.999583+00:00] Bed room humidifier: current AIR_HUMIDITY is 70.
+[2023-10-29 21:31:05.999583+00:00] Primary air conditioner: current TEMPARATURE is 20.

@@ -1,141 +1,90 @@
+"""Module for base class for all sensors."""
+
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum, StrEnum, auto
-from random import randrange
-from math import floor
+from typing import Literal
 
-
-class OperationMode(Enum):
-    IS_EQUAL = auto()
-    IS_NOT_EQUAL = auto()
-    IS_GREATER_THAN = auto()
-    IS_GREATER_THAN_OR_EQUAL_TO = auto()
-    IS_LESS_THAN = auto()
-    IS_LESS_THAN_OR_EQUAL_TO = auto()
-
-
-class SensorDataKind(StrEnum):
-    UV_INDEX = "UV_INDEX"
-    BRIGHTNESS = "BRIGNTNESS"
-    AIR_HUMIDITY = "AIR_HUMIDITY"
-    SOIL_HUMIDITY = "SOIL_HUMIDITY"
-    RELATIVE_TEMPARATURE = "RELATIVE_TEMPARATURE"
-    TEMPERATURE = "TEMPARATURE"
-
-
-@dataclass
-class SensorData:
-    sensor_data_kind: SensorDataKind
-    value: int
-
-
-@dataclass
-class SensorPayload:
-    sender_uuid: int
-    sender_name: str
-    datetime_utc_aware: datetime
-    sensor_data: list[SensorData] = field(default_factory=list)
+from src.sensors.randomize_sensor_data_value import randomize_sensor_data_value
+from src.sensors.quantity import QuantityKind
 
 
 @dataclass
 class Sensor:
+    """Base class for all sensors.
+
+    This class uses the `randomize_sensor_data_value` function
+    to generate random sensor data.
+    """
+
     name: str
     uuid: int
 
-    sensor_range_min: int = field(init=False, default=0)
-    sensor_range_max: int = field(init=False, default=100)
-    sensor_variation_percentage: float = field(init=False, default=0.1)
+    # The attribute `_kind` is initialized by the `__post_init__` method of the subclass.
+    _sensor_kind: QuantityKind = field(init=False, default=QuantityKind.NONE)
+    _sensor_last_reading: int = field(init=False)
 
-    _sensor_data: dict[SensorDataKind, SensorData] = field(
-        init=False, default_factory=dict
+    # Used to generate random sensor data.
+    # Unrelated to the sensor data itself.
+    __sensor_random_variables: tuple[int, int, float] = field(
+        init=False, default_factory=(lambda: (0, 100, 0.1))
     )
 
-    def _generate_random_sensor_data(
-        self,
-        previous_value: int,
-        step: int = 1,
-    ) -> int:
-        """By simply calling `randrange` to stimulate real world data, one issue
-        that I do not like is how much the data fluctuates.
+    def __post_init__(self) -> None:
+        """Initialize sensor data."""
+        self._sensor_last_reading: int = self.__sensor_random_variables[0]
 
-        For example, at one point the UV index was read at 2,
-        then in the next second the UV index jumped to 20, which is absurd.
+    def update_sensor(self) -> str:
+        """Update the sensor data and return a loggable string."""
 
-        The point of this function is to make the simulation more realistic.
+        range_min, range_max, variation_percentage = self.__sensor_random_variables
 
-        This is done by instead of generate a random value every time.
-        The function accepts the previous value along with some permissible variation.
-
-        The parameters `min_value` and `max_value` take precedence over variant.
-
-        Args:
-        :param:
-            previous_value (int): The previously generated random value.
-            variant_percentage (float): Variation allowed from `previous_value`.
-            min_value (int, optional): Smallest value allowed. Defaults to 0.
-            max_value (int, optional): Largest value allowed. Defaults to 100.
-            step (int, optional): _description_. Defaults to 1.
-
-        Returns:
-            int: A newly generated random number.
-        """
-        min_value: int = self.sensor_range_min
-        max_value: int = self.sensor_range_max
-        variation_percentage: float = self.sensor_variation_percentage
-
-        variant_allowed: int = floor(previous_value * variation_percentage) + floor(
-            (max_value - min_value) * variation_percentage
+        self._sensor_last_reading = randomize_sensor_data_value(
+            self._sensor_last_reading,
+            range_min,
+            range_max,
+            variation_percentage,
         )
 
-        random_min_value: int = max(min_value, previous_value - variant_allowed)
-        random_max_value: int = min(max_value, previous_value + variant_allowed)
+        return self.get_loggable_string()
 
-        return randrange(random_min_value, random_max_value, step)
+    def get_loggable_string(self) -> str:
+        """Get a loggable string representing the current state of the sensor."""
 
-    def update_sensor_data(self) -> None:
-        for key, data in self._sensor_data.items():
-            data.value = self._generate_random_sensor_data(
-                data.value,
-            )
+        curr_time: datetime = datetime.now(timezone.utc)
 
-            self._sensor_data[key] = data
+        return f"[{curr_time}] {self.name}: current {self._sensor_kind} reading is {self._sensor_last_reading}."
 
-    def get_sensor_payload(self) -> SensorPayload:
-        datetime_utc_aware: datetime = datetime.now(timezone.utc)
-        return SensorPayload(
-            self.uuid,
-            self.name,
-            datetime_utc_aware,
-            self._sensor_data,
-        )
+    def get_sensor_kind(self) -> QuantityKind:
+        """Get the sensor kind."""
+        return self._sensor_kind
 
-    def data_is(
+    def get_sensor_last_reading(self) -> int:
+        """Get the current sensor value."""
+        return self._sensor_last_reading
+
+    def compare_sensor_reading(
         self,
-        sensor_data_kind: SensorDataKind,
-        operation_mode: OperationMode,
+        comparison_mode: Literal["EQ", "NE", "LE", "GE", "LT", "GT"],
         target_value: int,
     ) -> bool:
-        if sensor_data_kind not in self._sensor_data:
-            return False
+        """Compare the current sensor reading with a target value."""
+        curr_reading: int = self._sensor_last_reading
 
-        sensor_data: SensorData = self._sensor_data[sensor_data_kind]
-        sensor_data_value: int = sensor_data.value
+        match comparison_mode:
+            case "EQ":
+                return curr_reading == target_value
 
-        match (operation_mode):
-            case OperationMode.IS_EQUAL:
-                return sensor_data_value == target_value
+            case "NE":
+                return curr_reading != target_value
 
-            case OperationMode.IS_NOT_EQUAL:
-                return sensor_data_value != target_value
+            case "GT":
+                return curr_reading > target_value
 
-            case OperationMode.IS_GREATER_THAN:
-                return sensor_data_value > target_value
+            case "GE":
+                return curr_reading >= target_value
 
-            case OperationMode.IS_GREATER_THAN_OR_EQUAL_TO:
-                return sensor_data_value >= target_value
+            case "LT":
+                return curr_reading < target_value
 
-            case OperationMode.IS_LESS_THAN:
-                return sensor_data_value < target_value
-
-            case OperationMode.IS_LESS_THAN_OR_EQUAL_TO:
-                return sensor_data_value <= target_value
+            case _:
+                return curr_reading <= target_value
