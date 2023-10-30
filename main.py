@@ -21,8 +21,7 @@ turned off when the temperature is low.
 
 """
 
-
-from src.interface import start_interface
+from tkinter import Tk
 
 from src.schedulers.scheduler import Scheduler
 from src.schedulers.scheduler_event import SchedulerEvent
@@ -175,17 +174,7 @@ def prepare_basic_scheduler() -> Scheduler:
             log_function=print,
         )
 
-    with open(
-        "logs/sensor_logs.txt",
-        "w",
-        encoding="utf-8",
-    ) as sensor_log_file:
-        sensor_logger: SchedulerLogger = SchedulerLogger(
-            sensor_log_file,
-            log_function=print,
-        )
-
-    scheduler: Scheduler = Scheduler(event_logger, sensor_logger, 2)
+    scheduler: Scheduler = Scheduler(event_logger, 2)
 
     # register sensors and events
     scheduler.register_sensors(
@@ -211,7 +200,7 @@ def prepare_basic_scheduler() -> Scheduler:
 
 def main() -> None:
     basic_scheduler: Scheduler = prepare_basic_scheduler()
-    start_interface(basic_scheduler)
+    basic_scheduler.start_interface()
 
 
 if __name__ == "__main__":

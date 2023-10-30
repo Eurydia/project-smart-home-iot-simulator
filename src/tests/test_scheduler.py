@@ -18,7 +18,6 @@ def test_scheduler_is_running_getter():
 
         scheduler: Scheduler = Scheduler(
             test_logger,
-            test_logger,
             0,
         )
 
@@ -38,7 +37,6 @@ def test_scheduler_start_schedule_method():
         )
 
         scheduler: Scheduler = Scheduler(
-            test_logger,
             test_logger,
             0,
         )
@@ -62,7 +60,6 @@ def test_scheduler_start_schedule_method_prevent_multiple_starts():
 
         scheduler: Scheduler = Scheduler(
             test_logger,
-            test_logger,
             0,
         )
 
@@ -85,7 +82,6 @@ def test_scheduler_stop_schedule_method():
         )
 
         scheduler: Scheduler = Scheduler(
-            test_logger,
             test_logger,
             0,
         )

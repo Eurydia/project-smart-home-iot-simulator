@@ -18,12 +18,11 @@ class Device:
 
     _device_value_range: tuple[int, int] = field(
         init=False,
-        default_factory=(lambda: (0, 100)),
     )
 
     def __post_init__(self) -> None:
-        value_min, _ = self._device_value_range
-        self._device_value = value_min
+        self._device_value_range: tuple[int, int] = (0, 100)
+        self._device_value = 0
 
     def get_loggable_string(self) -> str:
         """Return a string representation of the current state of the smart device."""
@@ -48,7 +47,7 @@ class Device:
         return self._device_value
 
     def set_device_value(self, value: int) -> str:
-        """Set the brightness level of the smart light."""
+        """Set the current value of the smart device."""
 
         value_min, value_max = self._device_value_range
 
