@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass, field
 from time import sleep
+from typing import Callable
 
 import PySimpleGUI as sg
 
@@ -10,6 +11,20 @@ from src.sensors.sensor import Sensor
 from src.devices.device import Device
 from src.schedulers.scheduler_logger import SchedulerLogger
 from src.schedulers.scheduler_event import SchedulerEvent
+
+
+def prepare_sensor_status(
+    sensor_record: dict[int, Sensor],
+) -> str:
+    """Prepare the sensor status text."""
+
+    sensor_status_text: str = "\n"
+
+    for _, sensor in sensor_record.items():
+        loggable: str = sensor.get_loggable_string()
+        sensor_status_text = f"{sensor_status_text}{loggable}\n"
+
+    return sensor_status_text
 
 
 @dataclass
@@ -37,20 +52,14 @@ class Scheduler:
         default_factory=dict,
     )
 
-    def is_running(self) -> bool:
-        """Return whether the scheduler is running."""
-        return self._runnning
-
-    def stop_schedule(self) -> None:
-        """Stop the scheduler."""
-        self._runnning = False
-
     def start_interface(self) -> None:
-        controls: list[list[sg.Element]] = []
+        """Start the scheduler interface."""
+
+        device_controls: list[list[sg.Element]] = []
 
         for uuid, device in self._record_devices.items():
-            controls.append([sg.Text(device.name)])
-            controls.append(
+            device_controls.append([sg.Text(device.name)])
+            device_controls.append(
                 [
                     sg.Text(
                         f"{device.get_device_kind()}: {device.get_device_value()}",
@@ -58,7 +67,7 @@ class Scheduler:
                     )
                 ]
             )
-            controls.append(
+            device_controls.append(
                 [
                     sg.Slider(
                         range=device.get_device_value_range(),
@@ -75,12 +84,12 @@ class Scheduler:
             [sg.Text("Sensor status:")],
             [
                 sg.Text(
-                    "\n".join(s.get_loggable_string() for s in self.get_sensors()),
+                    prepare_sensor_status(self._record_sensors),
                     auto_size_text=True,
                     key="sensor-status",
                 )
             ],
-            *controls,
+            *device_controls,
             [sg.Text("Control Status: Manual", key="control-status")],
             [
                 sg.Button("Manual", key="control-status-manual"),
@@ -89,10 +98,23 @@ class Scheduler:
             [sg.Button("cancel")],
         ]
 
+        def dispatch_event() -> None:
+            window["sensor-status"].update(
+                prepare_sensor_status(self._record_sensors),
+            )
+
+            for uuid, devices in self._record_devices.items():
+                window[f"device-value-{uuid}"].update(
+                    f"{devices.get_device_kind()}: {devices.get_device_value()}"
+                )
+                window[f"device-control-{uuid}"].update(
+                    value=devices.get_device_value(),
+                )
+
         window = sg.Window("Window Title", layout).finalize()
 
         while True:
-            window_data: list[str, dict[str, float]] = window.read()
+            window_data: tuple[str, dict[str, float]] = window.read()
 
             event: str = window_data[0]
             values: dict[str, float] = window_data[1]
@@ -104,34 +126,34 @@ class Scheduler:
                 window["control-status"].update("Control Status: Auto")
                 window["control-status-auto"].update(disabled=True)
                 window.perform_long_operation(
-                    lambda: self.start_schedule(window),
+                    lambda: self._start_automatic_schedule(dispatch_event),
                     "scheduler-stopped",
                 )
                 continue
 
             if event != "control-status-auto":
-                self.stop_schedule()
+                self._runnning = False
                 window["control-status"].update("Control Status: Manual")
                 window["control-status-auto"].update(disabled=False)
 
             if event.startswith("device-control-"):
-                device_uuid: int = int(event.removeprefix("device-control-"))
-                self.update_device(
-                    device_uuid,
+                uuid: int = int(event.removeprefix("device-control-"))
+                loggable_text: str = self._record_devices[uuid].set_device_value(
                     int(values[event]),
                 )
+                self.event_logger.add_log(loggable_text)
 
             if event == "control-status-manual":
-                print("u")
-                self.update_sensors()
-                self.check_events()
+                self._update_sensors()
+                self._evaluate_events()
+
                 window["sensor-status"].update(
-                    "\n".join(s.get_loggable_string() for s in self.get_sensors())
+                    prepare_sensor_status(self._record_sensors),
                 )
 
             for uuid, devices in self._record_devices.items():
                 window[f"device-value-{uuid}"].update(
-                    f"{devices.get_device_kind()}: {devices.get_device_value()}"
+                    f"{devices.get_device_kind()}: {devices.get_device_value()}",
                 )
                 window[f"device-control-{uuid}"].update(
                     value=devices.get_device_value(),
@@ -139,7 +161,11 @@ class Scheduler:
 
         window.close()
 
-    def start_schedule(self, window: sg.Window, debug: bool = False) -> None:
+    def _start_automatic_schedule(
+        self,
+        dispatch_event: Callable[[], None],
+        debug: bool = False,
+    ) -> None:
         """Start the scheduler.
 
         Each run, the sensors are updated and the events are checked.
@@ -149,33 +175,23 @@ class Scheduler:
 
         # If the scheduler is already running, stop it.
         if self._runnning:
-            self.stop_schedule()
+            self._runnning = False
             return
 
         self._runnning = True
 
         while self._runnning:
-            self.update_sensors()
-            self.check_events()
+            self._update_sensors()
+            self._evaluate_events()
 
-            window["sensor-status"].update(
-                "\n".join(s.get_loggable_string() for s in self.get_sensors())
-            )
-
-            for uuid, devices in self._record_devices.items():
-                window[f"device-value-{uuid}"].update(
-                    f"{devices.get_device_kind()}: {devices.get_device_value()}"
-                )
-                window[f"device-control-{uuid}"].update(
-                    value=devices.get_device_value(),
-                )
+            dispatch_event()
 
             sleep(self.update_interval_sec)
 
             if debug:
                 break
 
-    def update_sensors(self) -> None:
+    def _update_sensors(self) -> None:
         """Update registered sensors."""
 
         for _, sensor in self._record_sensors.items():
@@ -183,16 +199,7 @@ class Scheduler:
 
             self.event_logger.add_log(sensor_log)
 
-    def update_device(self, device_uuid: int, value: int) -> None:
-        """Update registered smart devices."""
-
-        if device_uuid not in self._record_devices:
-            return
-
-        loggable: str = self._record_devices[device_uuid].set_device_value(value)
-        self.event_logger.add_log(loggable)
-
-    def check_events(self) -> None:
+    def _evaluate_events(self) -> None:
         """Check the requirements of the events in the scheduler.
 
         If an event should be triggered,
@@ -206,16 +213,6 @@ class Scheduler:
 
             for event_log in event_logs:
                 self.event_logger.add_log(event_log)
-
-    def get_sensors(self) -> list[Sensor]:
-        """Return the registered sensors as a list."""
-
-        return list(self._record_sensors.values())
-
-    def get_devices(self) -> list[Device]:
-        """Return the registered smart devices as a list."""
-
-        return list(self._record_devices.values())
 
     # registry methods
     def register_events(

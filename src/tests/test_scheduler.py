@@ -41,7 +41,7 @@ def test_scheduler_start_schedule_method():
             0,
         )
 
-        scheduler.start_schedule(debug=True)
+        scheduler._start_automatic_schedule(debug=True)
 
         assert scheduler.is_running() is True
 
@@ -63,8 +63,8 @@ def test_scheduler_start_schedule_method_prevent_multiple_starts():
             0,
         )
 
-        scheduler.start_schedule(debug=True)
-        scheduler.start_schedule(debug=True)
+        scheduler._start_automatic_schedule(debug=True)
+        scheduler._start_automatic_schedule(debug=True)
 
         assert scheduler.is_running() is False
 
@@ -86,7 +86,7 @@ def test_scheduler_stop_schedule_method():
             0,
         )
 
-        scheduler.start_schedule(debug=True)
+        scheduler._start_automatic_schedule(debug=True)
         scheduler.stop_schedule()
 
         assert scheduler.is_running() is False

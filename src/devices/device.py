@@ -29,7 +29,7 @@ class Device:
 
         curr_time: datetime = datetime.now(timezone.utc)
 
-        return f"[{curr_time}] {self.name}: current {self._device_kind} is {self._device_value}."
+        return f"[{curr_time}] {self.name}: current {self._device_kind} set to {self._device_value}."
 
     def get_device_value_range(self) -> tuple[int, int]:
         """Return the range of the smart device."""

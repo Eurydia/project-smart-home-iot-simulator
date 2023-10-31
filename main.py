@@ -21,8 +21,6 @@ turned off when the temperature is low.
 
 """
 
-from tkinter import Tk
-
 from src.schedulers.scheduler import Scheduler
 from src.schedulers.scheduler_event import SchedulerEvent
 from src.schedulers.scheduler_logger import SchedulerLogger
