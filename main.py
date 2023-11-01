@@ -20,6 +20,8 @@ The air conditioner is turned on when the temperature is high and
 turned off when the temperature is low.
 
 """
+import tkinter as tk
+
 
 from src.schedulers.scheduler import Scheduler
 from src.schedulers.scheduler_event import SchedulerEvent
