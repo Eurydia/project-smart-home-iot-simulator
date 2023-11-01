@@ -1,4 +1,4 @@
-from src.schedulers.scheduler_event import SchedulerEvent
+from src.scheduler import SchedulerEvent
 
 
 def test_scheduler_event_should_trigger_method_empty():

@@ -44,7 +44,7 @@ class Device:
         """Return a string representation of the current state of the smart device."""
 
         loggable_text: str = (
-            f"{self.name}: current {self._device_kind} set to {self._device_value}."
+            f"{self.name}: current {self._device_kind} is {self._device_value}."
         )
 
         if not include_timestamp:
@@ -78,7 +78,7 @@ class Device:
 
         return self._device_value
 
-    def set_device_value(self, value: int) -> str:
+    def set_device_value(self, value: int, include_timestamp: bool = False) -> str:
         """Set the current value of the smart device.
 
         If the new value is outside the range of the smart device,
@@ -102,7 +102,7 @@ class Device:
 
         self._device_value = value
 
-        return self.get_loggable_text()
+        return self.get_loggable_text(include_timestamp)
 
 
 BASIC_SMART_LIGHT = Device(

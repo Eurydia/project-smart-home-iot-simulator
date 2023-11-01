@@ -91,9 +91,14 @@ class Sensor:
         self._uuid = self.__class__._uuid_tracker
         self.__class__._uuid_tracker += 1
 
-    def update_sensor_value(self) -> str:
+    def update_sensor_value(self, include_timestamp: bool = False) -> str:
         """Update the sensor reading.
         Return a loggable string representation of the current state of the sensor.ku
+
+        Parameters
+        ----------
+        include_timestamp : bool
+            Whether to include a timestamp in the loggable string, by default False.
 
         Returns
         -------
@@ -106,7 +111,7 @@ class Sensor:
             self.sensor_reading_range,
         )
 
-        return self.get_loggable_text()
+        return self.get_loggable_text(include_timestamp)
 
     def get_loggable_text(self, include_timestamp: bool = True) -> str:
         """Return a loggable string representation of the current state of the sensor.\
@@ -201,25 +206,25 @@ class Sensor:
 
 
 BASIC_THERMOMETER = Sensor(
-    name="Basic Thermometer",
+    name="Basic thermometer",
     sensor_kind=PhysicalQuantity.TEMPERATURE,
     sensor_reading_range=(-20, 75),
 )
 
 BASIC_HYGROMETER = Sensor(
-    name="Basic Hygrometer",
+    name="Basic hygrometer",
     sensor_kind=PhysicalQuantity.AIR_HUMIDITY,
     sensor_reading_range=(0, 100),
 )
 
 BASIC_DAYLIGHT_SENSOR = Sensor(
-    name="Basic Daylight Sensor",
+    name="Basic daylight sensor",
     sensor_kind=PhysicalQuantity.BRIGHTNESS,
     sensor_reading_range=(0, 100),
 )
 
 BASIC_MOTION_SENSOR = Sensor(
-    name="Basic Motion Sensor",
+    name="Basic motion sensor",
     sensor_kind=PhysicalQuantity.MOTION,
     sensor_reading_range=(0, 100),
 )

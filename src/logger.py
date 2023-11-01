@@ -11,8 +11,8 @@ class Logger:
         log_file: TextIO,
         log_function: Callable[[str], None],
     ) -> None:
-        self._log_file = log_file
-        self._log_function = log_function
+        self.log_file = log_file
+        self.log_function = log_function
 
     def log_text(self, loggable_text: str) -> None:
         """Log a message to a file and a stream.
@@ -23,10 +23,10 @@ class Logger:
             The message to log.
         """
 
-        self._log_function(loggable_text)
+        self.log_function(loggable_text)
 
         with open(
-            self._log_file.name,
+            self.log_file.name,
             mode="a",
             encoding="utf-8",
         ) as file:

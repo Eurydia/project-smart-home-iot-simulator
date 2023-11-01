@@ -34,7 +34,7 @@ class SchedulerEvent:
 class Scheduler:
     """Scheduler that can be used to schedule events and update sensors."""
 
-    def __init__(self, *, update_interval_sec: int = 5) -> None:
+    def __init__(self, update_interval_sec: int = 5) -> None:
         self.update_interval_sec = update_interval_sec
 
         self._running: bool = False
