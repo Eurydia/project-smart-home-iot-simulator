@@ -20,72 +20,77 @@ The air conditioner is turned on when the temperature is high and
 turned off when the temperature is low.
 
 """
-import tkinter as tk
 
-
-from src.schedulers.scheduler import Scheduler
-from src.schedulers.scheduler_event import SchedulerEvent
-from src.schedulers.scheduler_logger import SchedulerLogger
-
-from src.sensors.sensor_photometric import SunlightSensor
-from src.sensors.sensor_humidity import AirHumiditySensor
-from src.sensors.sensor_temperature import TemperatureSensor
-
-from src.devices.device_light import SmartLight
-from src.devices.device_humidifier import SmartHumidifier
-from src.devices.device_air_conditioner import Airconditioner
+from src.scheduler import Scheduler, SchedulerEvent
+from src.logger import Logger
+from src.physical_quantity import PhysicalQuantity
+from src.sensor import Sensor
+from src.device import Device
+from src.dashboard import Dashboard
 
 
 def prepare_basic_scheduler() -> Scheduler:
     """Prepare the scheduler."""
 
-    # prepare sensors and smart devices
-    main_sunlight_sensor: SunlightSensor = SunlightSensor(
+    # Prepare sensors
+    main_sunlight_sensor: Sensor = Sensor(
         "Main sunlight sensor",
-        100,
+        PhysicalQuantity.BRIGHTNESS,
+        (0, 100),
     )
-    main_humidity_sensor: AirHumiditySensor = AirHumiditySensor(
+    main_humidity_sensor: Sensor = Sensor(
         "Main humidity sensor",
-        101,
+        PhysicalQuantity.AIR_HUMIDITY,
+        (0, 100),
     )
-    main_thermometer: TemperatureSensor = TemperatureSensor(
+    main_thermometer: Sensor = Sensor(
         "Main thermometer",
-        102,
+        PhysicalQuantity.TEMPERATURE,
+        (-20, 75),
+    )
+    bathroom_motion_sensor: Sensor = Sensor(
+        "Bathroom motion sensor",
+        PhysicalQuantity.MOTION,
+        (0, 100),
     )
 
-    front_door_light: SmartLight = SmartLight(
+    # Prepare actuators
+    front_door_light: Device = Device(
         "Front door light",
-        9024,
+        PhysicalQuantity.BRIGHTNESS,
+        (0, 100),
     )
-    back_door_light: SmartLight = SmartLight(
-        "Back door light",
-        9025,
+    bathroom_light: Device = Device(
+        "Bathroom light",
+        PhysicalQuantity.BRIGHTNESS,
+        (0, 100),
     )
-    balcony_light: SmartLight = SmartLight(
-        "Balcony light",
-        9026,
+    balcony_light: Device = Device(
+        "Front door light",
+        PhysicalQuantity.BRIGHTNESS,
+        (0, 100),
     )
-
-    bed_room_humidifier: SmartHumidifier = SmartHumidifier(
+    bed_room_humidifier: Device = Device(
         "Bed room humidifier",
-        9027,
+        PhysicalQuantity.AIR_HUMIDITY,
+        (0, 100),
     )
-
-    primary_air_conditioner: Airconditioner = Airconditioner(
+    primary_air_conditioner: Device = Device(
         "Primary air conditioner",
-        9028,
+        PhysicalQuantity.TEMPERATURE,
+        (18, 30),
     )
 
-    # Prepare scheduler events
+    # Prepare events
+
     # turn on lights when it is dark (brightness <= 20)
     turn_on_light_when_dark: SchedulerEvent = SchedulerEvent(
         requirements=[
             lambda: main_sunlight_sensor.compare_sensor_reading("LE", 20),
         ],
         actions=[
-            (lambda: front_door_light.set_device_value(75)),
-            (lambda: back_door_light.set_device_value(75)),
-            (lambda: balcony_light.set_device_value(75)),
+            lambda: front_door_light.set_device_value(75),
+            lambda: balcony_light.set_device_value(75),
         ],
     )
     # dim lights when it is not dark ( 20 < brightness <= 40)
@@ -96,10 +101,26 @@ def prepare_basic_scheduler() -> Scheduler:
         ],
         actions=[
             (lambda: front_door_light.set_device_value(25)),
-            (lambda: back_door_light.set_device_value(25)),
             (lambda: balcony_light.set_device_value(25)),
         ],
     )
+    turn_on_bathroom_light_when_motion_detected: SchedulerEvent = SchedulerEvent(
+        requirements=[
+            lambda: bathroom_motion_sensor.compare_sensor_reading("GT", 80),
+        ],
+        actions=[
+            (lambda: bathroom_light.set_device_value(100)),
+        ],
+    )
+    turn_off_bathroom_light_after_use: SchedulerEvent = SchedulerEvent(
+        requirements=[
+            lambda: bathroom_motion_sensor.compare_sensor_reading("LE", 80),
+        ],
+        actions=[
+            (lambda: bathroom_light.set_device_value(0)),
+        ],
+    )
+
     # turn off lights when it is bright (brightness > 40)
     turn_off_front_light_when_bright: SchedulerEvent = SchedulerEvent(
         requirements=[
@@ -107,7 +128,6 @@ def prepare_basic_scheduler() -> Scheduler:
         ],
         actions=[
             (lambda: front_door_light.set_device_value(0)),
-            (lambda: back_door_light.set_device_value(0)),
             (lambda: balcony_light.set_device_value(0)),
         ],
     )
@@ -155,6 +175,9 @@ def prepare_basic_scheduler() -> Scheduler:
         turn_on_light_when_dark,
         dim_light_when_not_dark,
         turn_off_front_light_when_bright,
+        # bathroom light events
+        turn_on_bathroom_light_when_motion_detected,
+        turn_off_bathroom_light_after_use,
         # humidifier events
         activate_humidifier_when_humidity_low,
         deactivate_humidifier_when_humidity_high,
@@ -163,18 +186,7 @@ def prepare_basic_scheduler() -> Scheduler:
         raise_temp_when_cold,
     ]
 
-    # prepare scheduler
-    with open(
-        "logs/event_logs.txt",
-        "w",
-        encoding="utf-8",
-    ) as event_log_file:
-        event_logger: SchedulerLogger = SchedulerLogger(
-            event_log_file,
-            log_function=print,
-        )
-
-    scheduler: Scheduler = Scheduler(event_logger, 2)
+    scheduler: Scheduler = Scheduler()
 
     # register sensors and events
     scheduler.register_sensors(
@@ -182,12 +194,13 @@ def prepare_basic_scheduler() -> Scheduler:
             main_sunlight_sensor,
             main_humidity_sensor,
             main_thermometer,
+            bathroom_motion_sensor,
         ]
     )
     scheduler.register_devices(
         [
             front_door_light,
-            back_door_light,
+            bathroom_light,
             balcony_light,
             bed_room_humidifier,
             primary_air_conditioner,
@@ -200,7 +213,19 @@ def prepare_basic_scheduler() -> Scheduler:
 
 def main() -> None:
     basic_scheduler: Scheduler = prepare_basic_scheduler()
-    basic_scheduler.start_interface()
+    # basic_scheduler.start_interface()
+    # prepare scheduler
+    with open(
+        "logs/event_logs.txt",
+        "w",
+        encoding="utf-8",
+    ) as event_log_file:
+        basic_logger: Logger = Logger(
+            event_log_file,
+            log_function=print,
+        )
+        my_dashboard = Dashboard(basic_scheduler, basic_logger)
+        my_dashboard.start()
 
 
 if __name__ == "__main__":

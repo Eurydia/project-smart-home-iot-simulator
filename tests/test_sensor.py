@@ -1,5 +1,5 @@
-from src.sensors.sensor import Sensor
-from src.sensors.quantity import QuantityKind
+from sensor import Sensor
+from physical_quantity import PhysicalQuantity
 
 
 def test_sensor_properties():
@@ -11,7 +11,7 @@ def test_sensor_properties():
     )
 
     assert sensor.name == "Sensor"
-    assert sensor.uuid == 0
+    assert sensor._uuid == 0
 
 
 def test_sensor_getters():
@@ -22,8 +22,8 @@ def test_sensor_getters():
         uuid=0,
     )
 
-    assert sensor.get_sensor_last_reading() == 0
-    assert sensor.get_sensor_kind() == QuantityKind.NONE
+    assert sensor.sensor_reading() == 0
+    assert sensor.sensor_kind() == PhysicalQuantity.NONE
 
 
 def test_sensor_reading_is_equal_method():

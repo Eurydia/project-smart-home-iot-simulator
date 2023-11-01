@@ -1,5 +1,5 @@
-from src.devices.device import Device
-from src.sensors.quantity import QuantityKind
+from device import Device
+from physical_quantity import PhysicalQuantity
 
 
 def test_device_properties():
@@ -22,6 +22,6 @@ def test_device_getters():
         uuid=1,
     )
 
-    assert device.get_device_value() == 0
-    assert device.get_device_kind() == QuantityKind.NONE
-    assert device.get_device_value_range() == (0, 100)
+    assert device.device_value() == 0
+    assert device.device_kind() == PhysicalQuantity.NONE
+    assert device.device_value_range() == (0, 100)

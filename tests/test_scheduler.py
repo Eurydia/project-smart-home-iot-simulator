@@ -1,7 +1,7 @@
 from tempfile import NamedTemporaryFile
 
-from src.schedulers.scheduler import Scheduler
-from src.schedulers.scheduler_logger import SchedulerLogger
+from scheduler import Scheduler
+from logger import Logger
 
 
 def test_scheduler_is_running_getter():
@@ -11,7 +11,7 @@ def test_scheduler_is_running_getter():
         mode="w",
         encoding="utf-8",
     ) as temp_file:
-        test_logger = SchedulerLogger(
+        test_logger = Logger(
             temp_file,
             lambda _: None,
         )
@@ -31,7 +31,7 @@ def test_scheduler_start_schedule_method():
         mode="w",
         encoding="utf-8",
     ) as temp_file:
-        test_logger = SchedulerLogger(
+        test_logger = Logger(
             temp_file,
             lambda _: None,
         )
@@ -41,7 +41,7 @@ def test_scheduler_start_schedule_method():
             0,
         )
 
-        scheduler._start_automatic_schedule(debug=True)
+        scheduler.start(debug=True)
 
         assert scheduler.is_running() is True
 
@@ -53,7 +53,7 @@ def test_scheduler_start_schedule_method_prevent_multiple_starts():
         mode="w",
         encoding="utf-8",
     ) as temp_file:
-        test_logger = SchedulerLogger(
+        test_logger = Logger(
             temp_file,
             lambda _: None,
         )
@@ -63,8 +63,8 @@ def test_scheduler_start_schedule_method_prevent_multiple_starts():
             0,
         )
 
-        scheduler._start_automatic_schedule(debug=True)
-        scheduler._start_automatic_schedule(debug=True)
+        scheduler.start(debug=True)
+        scheduler.start(debug=True)
 
         assert scheduler.is_running() is False
 
@@ -76,7 +76,7 @@ def test_scheduler_stop_schedule_method():
         mode="w",
         encoding="utf-8",
     ) as temp_file:
-        test_logger = SchedulerLogger(
+        test_logger = Logger(
             temp_file,
             lambda _: None,
         )
@@ -86,7 +86,7 @@ def test_scheduler_stop_schedule_method():
             0,
         )
 
-        scheduler._start_automatic_schedule(debug=True)
+        scheduler.start(debug=True)
         scheduler.stop_schedule()
 
         assert scheduler.is_running() is False
